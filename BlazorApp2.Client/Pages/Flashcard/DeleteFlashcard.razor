@@ -1,0 +1,68 @@
+﻿@using BlazorApp2.Shared.Models
+@page "/deleteflashcard/{id}"
+@inject HttpClient Http
+@inject Microsoft.AspNetCore.Components.IUriHelper UriHelper
+
+<h1>Delete</h1>
+<h3>Flashcard</h3>
+<hr />
+<div class="col-md-4">
+    <table class="table">
+        <tr>
+            <td>Label</td>
+            <td>@fc.Label</td>
+        </tr>
+        <tr>
+            <td>Category</td>
+            @if (fc.Category != null)
+            { 
+                <td>@fc.Category.Label</td>
+            }
+        </tr>
+        <tr>
+            <td>Content1</td>
+            <td>@fc.Content1</td>
+        </tr>
+        <tr>
+            <td>Content2</td>
+            <td>@fc.Content2</td>
+        </tr>
+    </table>
+    <div class="form-group">
+        <input type="button" value="Delete" onclick="@(async () => await Delete())" class="btn btn-default" />
+        <input type="button" value="Cancel" onclick="@cancel" class="btn" />
+    </div>
+</div>
+
+
+@functions {
+
+    [Parameter]
+    public string id { get; set; }
+
+    Flashcard fc = new Flashcard();
+
+    protected override async Task OnInitAsync()
+    {
+        await GetFlashcard();
+    }
+
+    private async Task GetFlashcard()
+    {
+        fc = await Http.GetJsonAsync<Flashcard>("api/FlashCard/"+Convert.ToInt32(id));
+
+        System.Console.WriteLine("fc category : " + fc.Category.Label);
+
+    }
+
+    protected async Task Delete()
+    {
+        await Http.DeleteAsync("api/FlashCard/Delete/"+Convert.ToInt32(id));
+        UriHelper.NavigateTo("/manageflashcard");
+    }
+    void cancel()
+    {
+        UriHelper.NavigateTo("/manageflashcard");
+    }
+}
+

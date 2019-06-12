@@ -1,0 +1,42 @@
+﻿@using BlazorApp2.Shared.Models
+
+@if (currentCard != null)
+{
+    <div class="col-sm-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title">@currentCard.Label</h5>
+                @if (!flipped)
+                {
+                    <p class="card-text">@currentCard.Content1</p>
+                }
+                else
+                {
+                    <p class="card-text">@currentCard.Content2</p>
+                }
+                <button onclick="@FlipCard" class="btn btn-primary">Flip</button>
+            </div>
+        </div>
+    </div>
+    
+}
+
+@functions {
+
+    [Parameter]
+    public Flashcard currentCard { get; set; }
+
+    private bool flipped { get; set; } = false;
+
+    private void FlipCard()
+    {
+        if (flipped)
+        {
+            flipped = false;
+        }
+        else
+        {
+            flipped = true;
+        }
+    }
+}

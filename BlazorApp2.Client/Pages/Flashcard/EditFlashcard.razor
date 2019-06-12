@@ -1,0 +1,76 @@
+﻿@using BlazorApp2.Shared.Models
+@page "/editflashcard/{id}"
+@inject HttpClient Http
+@inject Microsoft.AspNetCore.Components.IUriHelper UriHelper
+
+<h1>Edit</h1>
+<h3>Flashcard</h3>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form>
+            <div class="form-group">
+                <label for="Label" class="control-label">Label</label>
+                <input for="Label" class="form-control" bind="@fc.Label" />
+            </div>
+            <div class="form-group">
+                <label asp-for="Gender" class="control-label">Category</label>
+                <select class="form-control" bind="@fc.CategoryId">
+                    @foreach (var category in categoryList)
+                    {
+                        <option value="@category.CategoryId">@category.Label</option>
+                    }
+                </select>
+            </div>
+            <div class="form-group">
+                <label asp-for="Content1" class="control-label">Content1</label>
+                <input asp-for="Content1" class="form-control" bind="@fc.Content1" />
+            </div>
+            <div class="form-group">
+                <label asp-for="Content2" class="control-label">Content2</label>
+                <input asp-for="Content2" class="form-control" bind="@fc.Content2" />
+            </div>
+            <div class="form-group">
+                <button type="button" class="btn btn-default" onclick="@(async () => await EditFc())">Save</button>
+                <button class="btn" onclick="@cancel">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@functions {
+
+    [Parameter]
+    public string id { get; set; }
+
+    Flashcard fc = new Flashcard();
+
+    private List<Category> categoryList = new List<Category>();
+
+    protected override async Task OnInitAsync()
+    {
+        await GetCategory();
+        await GetFlashcard();
+    }
+
+    private async Task GetCategory()
+    {
+        categoryList = await Http.GetJsonAsync<List<Category>>("api/Category/Index");
+    }
+
+    private async Task GetFlashcard()
+    {
+        fc = await Http.GetJsonAsync<Flashcard>("api/FlashCard/"+Convert.ToInt32(id));
+    }
+
+    protected async Task EditFc()
+    {
+        await Http.SendJsonAsync(HttpMethod.Put, "api/FlashCard/Edit", fc);
+        UriHelper.NavigateTo("/manageflashcard");
+    }
+    void cancel()
+    {
+        UriHelper.NavigateTo("/manageflashcard");
+    }
+}
+

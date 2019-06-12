@@ -1,0 +1,100 @@
+﻿@page "/manageflashcard"
+@using BlazorApp2.Shared.Models
+@inject HttpClient Http
+
+<h1>Flashcard Data</h1>
+<p>Manage your Flashcard</p>
+
+<p>
+    <a href="/addflashcard">Create New</a>
+</p>
+
+@if (fcList == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="col-md-4">
+        <select class="form-control" onchange="@CategoryClicked">
+            <option value="0">-- Select Category --</option>
+            @foreach (var category in categoryList)
+            {
+                <option value="@category.CategoryId">@category.Label</option>
+            }
+        </select>
+    </div>
+
+    <table class='table'>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Category</th>
+                <th>Difficulty</th>
+                <th>Content1</th>
+                <th>Content2</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var fc in fcList)
+            {
+                <tr>
+                    <td>@fc.FlashcardId</td>
+                    <td>@fc.Label</td>
+                    <td>@fc.Category.Label</td>
+                    <td>@fc.Category.Difficulty</td>
+                    <td>@fc.Content1</td>
+                    <td>@fc.Content2</td>
+                    <td>
+                        <a href='/editflashcard/@fc.FlashcardId'>Edit</a>  |
+                        <a href='/deleteflashcard/@fc.FlashcardId'>Delete</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@functions {
+
+    private List<Category> categoryList = new List<Category>();
+    private List<Flashcard> fcList = new List<Flashcard>();
+
+    protected override async Task OnInitAsync()
+    {
+        await GetFlashcard();
+        await GetCategory();
+    }
+
+    private async Task GetFlashcard()
+    {
+        fcList = await Http.GetJsonAsync<List<Flashcard>>("api/FlashCard/Index");
+    }
+
+    private async Task GetCategory()
+    {
+        categoryList = await Http.GetJsonAsync<List<Category>>("api/Category/Index");
+    }
+
+    private async Task GetFlashCardByCategory(string categoryId)
+    {
+        fcList = await Http.GetJsonAsync<List<Flashcard>>("api/FlashCard/GetByCategory/"+categoryId);
+    }
+
+    protected async void CategoryClicked(UIChangeEventArgs categoryEvent)
+    {
+        fcList.Clear();
+        string categoryId = categoryEvent.Value.ToString();
+        if (categoryId == "0")
+        {
+            await GetFlashcard();
+        }
+        else
+        {
+            await GetFlashCardByCategory(categoryId);
+        }
+        this.StateHasChanged();
+    }
+
+}

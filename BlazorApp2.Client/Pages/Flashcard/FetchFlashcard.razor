@@ -1,0 +1,156 @@
+﻿@page "/fetchflashcard"
+@using BlazorApp2.Shared.Models
+@inject HttpClient Http
+
+<h1>Flashcard Data</h1>
+<p>This component demonstrates fetching FlashCard data from the server.</p>
+
+<p>
+    <a href="/addflashcard">Create New</a>
+</p>
+
+@if (fcList == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="col-md-4">
+        <select class="form-control" onchange="@CategoryClicked">
+            <option value="0">-- Select Category --</option>
+            @foreach (var category in categoryList)
+            {
+                <option value="@category.CategoryId">@category.Label</option>
+            }
+        </select>
+    </div>
+
+    <table class='table'>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Category</th>
+                <th>Difficulty</th>
+                <th>Content1</th>
+                <th>Content2</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var fc in fcList)
+            {
+                <tr>
+                    <td>@fc.FlashcardId</td>
+                    <td>@fc.Label</td>
+                    <td>@fc.Category.Label</td>
+                    <td>@fc.Category.Difficulty</td>
+                    <td>@fc.Content1</td>
+                    <td>@fc.Content2</td>
+                    <td>
+                        <a href='/editemployee/@fc.FlashcardId'>Edit</a>  |
+                        <a href='/delete/@fc.FlashcardId'>Delete</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    if (currentCard != null)
+    {
+
+        <div class="row">
+            <button disabled="@isPrevDisabled" onclick="@PreviousCard" class="btn btn-primary">Prev</button>
+            <BlazorApp2.Client.Components.FlashcardComponent currentCard=@currentCard></BlazorApp2.Client.Components.FlashcardComponent>
+            <button disabled="@isNextDisabled" onclick="@NextCard" class="btn btn-primary">Next</button>
+        </div>
+    }
+
+}
+
+@functions {
+
+    private List<Category> categoryList = new List<Category>();
+    private List<Flashcard> fcList = new List<Flashcard>();
+
+    private Flashcard currentCard = new Flashcard();
+
+    private string categoryId { get; set; } = "";
+
+    private bool flipped { get; set; } = false;
+
+    private bool isPrevDisabled { get; set; } = true;
+    private bool isNextDisabled { get; set; } = false;
+
+    protected override async Task OnInitAsync()
+    {
+        categoryList = await Http.GetJsonAsync<List<Category>>("api/Category/Index");
+
+        GetFlashcard();
+    }
+
+    private async void GetFlashcard()
+    {
+        fcList = await Http.GetJsonAsync<List<Flashcard>>("api/FlashCard/Index");
+
+        currentCard = fcList.First();
+    }
+
+    private void FlipCard()
+    {
+        if (flipped)
+        {
+            flipped = false;
+        }
+        else
+        {
+            flipped = true;
+        }
+    }
+
+    private void PreviousCard()
+    {
+        if( fcList.IndexOf(currentCard) > 0 )
+        {
+            isNextDisabled = false;
+            flipped = false;
+            currentCard = fcList.ElementAt(fcList.IndexOf(currentCard)-1);
+            if(fcList.IndexOf(currentCard) == 0)
+            {
+                isPrevDisabled = true;
+            }
+        }
+    }
+
+    private void NextCard()
+    {
+        if( fcList.IndexOf(currentCard) < (fcList.Count()-1) )
+        {
+            flipped = false;
+            isPrevDisabled = false;
+            currentCard = fcList.ElementAt(fcList.IndexOf(currentCard)+1);
+            if(fcList.IndexOf(currentCard)  == (fcList.Count()-1))
+            {
+                isNextDisabled = true;
+            }
+        }
+    }
+
+    protected async void CategoryClicked(UIChangeEventArgs categoryEvent)
+    {
+        fcList.Clear();
+        isNextDisabled = false;
+        isPrevDisabled = true;
+        categoryId = categoryEvent.Value.ToString();
+        if (categoryId == "0")
+        {
+            GetFlashcard();
+        }
+        else
+        {
+            fcList = await Http.GetJsonAsync<List<Flashcard>>("api/FlashCard/GetByCategory/"+categoryId);
+            currentCard = fcList.First();
+        }
+        this.StateHasChanged();
+    }
+
+}
